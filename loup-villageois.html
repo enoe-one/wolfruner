@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loup vs Villageois</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #root {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+        }
+
+        .title {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 3rem;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .btn {
+            padding: 1rem 3rem;
+            font-size: 1.3rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ee5a52;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #45b8b0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.3);
+        }
+
+        .btn-back {
+            background: #95a5a6;
+            color: white;
+            padding: 0.7rem 2rem;
+            font-size: 1rem;
+        }
+
+        .lobby-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            color: white;
+        }
+
+        .lobby-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .lobby-content {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .setting-item label {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .setting-item select,
+        .setting-item input {
+            padding: 0.7rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .players-list {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .player-item {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-list {
+            display: grid;
+            gap: 1rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .game-item {
+            background: rgba(255,255,255,0.1);
+            padding: 1.5rem;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .game-info {
+            flex: 1;
+        }
+
+        .game-canvas {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #2d5016;
+            overflow: hidden;
+        }
+
+        .player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            transition: opacity 0.3s;
+            border: 3px solid rgba(255,255,255,0.5);
+        }
+
+        .wolf {
+            background: #8b0000;
+        }
+
+        .villager {
+            background: #4169e1;
+        }
+
+        .invisible {
+            opacity: 0.3;
+        }
+
+        .lake {
+            position: absolute;
+            background: #4a90e2;
+            border-radius: 50%;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .house {
+            position: absolute;
+            background: #8b4513;
+            border-radius: 5px;
+        }
+
+        .house::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: -10px;
+            width: 120%;
+            height: 30px;
+            background: #a0522d;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        .countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 1000;
+        }
+
+        .countdown-number {
+            font-size: 10rem;
+            font-weight: bold;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .game-ui {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 1.5rem;
+            border-radius: 15px;
+            color: white;
+            min-width: 400px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .timer {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .powers {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .power-btn {
+            padding: 0.8rem 1.5rem;
+            border: 2px solid white;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .power-btn:hover:not(:disabled) {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+
+        .power-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .scores {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 1rem;
+            border-radius: 10px;
+            color: white;
+            z-index: 100;
+        }
+
+        .score-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .end-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            z-index: 1000;
+        }
+
+        .end-title {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+        }
+
+        .final-scores {
+            background: rgba(255,255,255,0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .direction-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 6rem;
+            color: rgba(255,255,255,0.8);
+            z-index: 50;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function App() {
+            const [screen, setScreen] = useState('menu');
+            const [playerName, setPlayerName] = useState('');
+            const [gameId, setGameId] = useState('');
+            const [playerId, setPlayerId] = useState(Math.random().toString(36).substr(2, 9));
+
+            useEffect(() => {
+                const name = localStorage.getItem('playerName');
+                if (name) setPlayerName(name);
+            }, []);
+
+            const savePlayerName = (name) => {
+                setPlayerName(name);
+                localStorage.setItem('playerName', name);
+            };
+
+            if (!playerName) {
+                return <PlayerNameScreen onSubmit={savePlayerName} />;
+            }
+
+            return (
+                <>
+                    {screen === 'menu' && <MainMenu setScreen={setScreen} />}
+                    {screen === 'create' && (
+                        <CreateGameScreen 
+                            playerName={playerName}
+                            playerId={playerId}
+                            setScreen={setScreen}
+                            setGameId={setGameId}
+                        />
+                    )}
+                    {screen === 'join' && (
+                        <JoinGameScreen 
+                            playerName={playerName}
+                            playerId={playerId}
+                            setScreen={setScreen}
+                            setGameId={setGameId}
+                        />
+                    )}
+                    {screen === 'lobby' && (
+                        <LobbyScreen 
+                            gameId={gameId}
+                            playerName={playerName}
+                            playerId={playerId}
+                            setScreen={setScreen}
+                        />
+                    )}
+                    {screen === 'game' && (
+                        <GameScreen 
+                            gameId={gameId}
+                            playerName={playerName}
+                            playerId={playerId}
+                            setScreen={setScreen}
+                        />
+                    )}
+                </>
+            );
+        }
+
+        function PlayerNameScreen({ onSubmit }) {
+            const [name, setName] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (name.trim()) {
+                    onSubmit(name.trim());
+                }
+            };
+
+            return (
+                <div className="menu-container">
+                    <h1 className="title">🐺 Loup vs Villageois</h1>
+                    <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                        <input
+                            type="text"
+                            placeholder="Votre nom..."
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            style={{padding: '1rem', fontSize: '1.2rem', borderRadius: '8px', border: 'none'}}
+                            autoFocus
+                        />
+                        <button type="submit" className="btn btn-primary">Commencer</button>
+                    </form>
+                </div>
+            );
+        }
+
+        function MainMenu({ setScreen }) {
+            return (
+                <div className="menu-container">
+                    <h1 className="title">🐺 Loup vs Villageois</h1>
+                    <div className="menu-buttons">
+                        <button className="btn btn-primary" onClick={() => setScreen('create')}>
+                            Créer une partie
+                        </button>
+                        <button className="btn btn-secondary" onClick={() => setScreen('join')}>
+                            Rejoindre une partie
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function CreateGameScreen({ playerName, playerId, setScreen, setGameId }) {
+            const [rounds, setRounds] = useState(3);
+            const [atouts, setAtouts] = useState(true);
+            const [creating, setCreating] = useState(false);
+
+            const handleCreate = async () => {
+                setCreating(true);
+                const id = Math.random().toString(36).substr(2, 6).toUpperCase();
+                
+                const game = {
+                    id,
+                    host: playerId,
+                    rounds: parseInt(rounds),
+                    atouts,
+                    players: [{
+                        id: playerId,
+                        name: playerName,
+                        score: 0
+                    }],
+                    status: 'waiting',
+                    createdAt: Date.now()
+                };
+
+                try {
+                    await window.storage.set(`game:${id}`, JSON.stringify(game), true);
+                    setGameId(id);
+                    setScreen('lobby');
+                } catch (error) {
+                    console.error('Erreur création:', error);
+                    alert('Erreur lors de la création de la partie');
+                    setCreating(false);
+                }
+            };
+
+            return (
+                <div className="lobby-container">
+                    <div className="lobby-header">
+                        <h1 className="title" style={{fontSize: '3rem'}}>Créer une partie</h1>
+                    </div>
+                    <div className="lobby-content">
+                        <div className="settings-grid">
+                            <div className="setting-item">
+                                <label>Nombre de rounds :</label>
+                                <select value={rounds} onChange={(e) => setRounds(e.target.value)}>
+                                    <option value="1">1 round</option>
+                                    <option value="2">2 rounds</option>
+                                    <option value="3">3 rounds</option>
+                                    <option value="4">4 rounds</option>
+                                    <option value="5">5 rounds</option>
+                                </select>
+                            </div>
+                            <div className="setting-item">
+                                <label>Atouts :</label>
+                                <select value={atouts} onChange={(e) => setAtouts(e.target.value === 'true')}>
+                                    <option value="true">Oui</option>
+                                    <option value="false">Non</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style={{display: 'flex', gap: '1rem', justifyContent: 'center'}}>
+                            <button className="btn btn-back" onClick={() => setScreen('menu')}>
+                                Retour
+                            </button>
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={handleCreate}
+                                disabled={creating}
+                            >
+                                {creating ? 'Création...' : 'Créer la partie'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function JoinGameScreen({ playerName, playerId, setScreen, setGameId }) {
+            const [games, setGames] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                loadGames();
+                const interval = setInterval(loadGames, 2000);
+                return () => clearInterval(interval);
+            }, []);
+
+            const loadGames = async () => {
+                try {
+                    const result = await window.storage.list('game:', true);
+                    if (result && result.keys) {
+                        const gamePromises = result.keys.map(async (key) => {
+                            try {
+                                const gameData = await window.storage.get(key, true);
+                                if (gameData) {
+                                    const game = JSON.parse(gameData.value);
+                                    if (game.status === 'waiting') {
+                                        return game;
+                                    }
+                                }
+                            } catch (e) {
+                                return null;
+                            }
+                            return null;
+                        });
+                        const allGames = await Promise.all(gamePromises);
+                        setGames(allGames.filter(g => g !== null));
+                    }
+                } catch (error) {
+                    console.log('Aucune partie disponible');
+                    setGames([]);
+                }
+                setLoading(false);
+            };
+
+            const handleJoin = async (game) => {
+                if (game.players.some(p => p.id === playerId)) {
+                    setGameId(game.id);
+                    setScreen('lobby');
+                    return;
+                }
+
+                if (game.players.length >= 8) {
+                    alert('Cette partie est complète');
+                    return;
+                }
+
+                const updatedGame = {
+                    ...game,
+                    players: [...game.players, {
+                        id: playerId,
+                        name: playerName,
+                        score: 0
+                    }]
+                };
+
+                try {
+                    await window.storage.set(`game:${game.id}`, JSON.stringify(updatedGame), true);
+                    setGameId(game.id);
+                    setScreen('lobby');
+                } catch (error) {
+                    alert('Erreur lors de la connexion');
+                }
+            };
+
+            return (
+                <div className="lobby-container">
+                    <div className="lobby-header">
+                        <h1 className="title" style={{fontSize: '3rem'}}>Parties disponibles</h1>
+                    </div>
+                    <div className="lobby-content">
+                        {loading ? (
+                            <p style={{textAlign: 'center', fontSize: '1.3rem'}}>Chargement...</p>
+                        ) : games.length === 0 ? (
+                            <p style={{textAlign: 'center', fontSize: '1.3rem'}}>Aucune partie disponible</p>
+                        ) : (
+                            <div className="game-list">
+                                {games.map(game => (
+                                    <div key={game.id} className="game-item">
+                                        <div className="game-info">
+                                            <h3 style={{fontSize: '1.5rem', marginBottom: '0.5rem'}}>
+                                                Partie #{game.id}
+                                            </h3>
+                                            <p>Joueurs: {game.players.length}/8</p>
+                                            <p>Rounds: {game.rounds} | Atouts: {game.atouts ? 'Oui' : 'Non'}</p>
+                                        </div>
+                                        <button 
+                                            className="btn btn-primary"
+                                            onClick={() => handleJoin(game)}
+                                        >
+                                            Rejoindre
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <button 
+                            className="btn btn-back" 
+                            onClick={() => setScreen('menu')}
+                            style={{marginTop: '2rem'}}
+                        >
+                            Retour
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function LobbyScreen({ gameId, playerName, playerId, setScreen }) {
+            const [game, setGame] = useState(null);
+
+            useEffect(() => {
+                loadGame();
+                const interval = setInterval(loadGame, 1000);
+                return () => clearInterval(interval);
+            }, [gameId]);
+
+            const loadGame = async () => {
+                try {
+                    const result = await window.storage.get(`game:${gameId}`, true);
+                    if (result) {
+                        const gameData = JSON.parse(result.value);
+                        setGame(gameData);
+                        
+                        if (gameData.status === 'playing') {
+                            setScreen('game');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erreur chargement:', error);
+                }
+            };
+
+            const handleStart = async () => {
+                if (!game || game.players.length < 2) {
+                    alert('Il faut au moins 2 joueurs pour commencer');
+                    return;
+                }
+
+                const updatedGame = {
+                    ...game,
+                    status: 'playing',
+                    currentRound: 1
+                };
+
+                try {
+                    await window.storage.set(`game:${gameId}`, JSON.stringify(updatedGame), true);
+                } catch (error) {
+                    alert('Erreur au démarrage');
+                }
+            };
+
+            const handleLeave = async () => {
+                if (!game) return;
+
+                const updatedGame = {
+                    ...game,
+                    players: game.players.filter(p => p.id !== playerId)
+                };
+
+                try {
+                    if (updatedGame.players.length === 0) {
+                        await window.storage.delete(`game:${gameId}`, true);
+                    } else {
+                        if (game.host === playerId && updatedGame.players.length > 0) {
+                            updatedGame.host = updatedGame.players[0].id;
+                        }
+                        await window.storage.set(`game:${gameId}`, JSON.stringify(updatedGame), true);
+                    }
+                    setScreen('menu');
+                } catch (error) {
+                    setScreen('menu');
+                }
+            };
+
+            if (!game) {
+                return <div className="menu-container"><p>Chargement...</p></div>;
+            }
+
+            const isHost = game.host === playerId;
+
+            return (
+                <div className="lobby-container">
+                    <div className="lobby-header">
+                        <h1 className="title" style={{fontSize: '3rem'}}>Salon - #{gameId}</h1>
+                    </div>
+                    <div className="lobby-content">
+                        <div className="players-list">
+                            <h2 style={{marginBottom: '1rem', fontSize: '1.5rem'}}>
+                                Joueurs ({game.players.length}/8)
+                            </h2>
+                            {game.players.map(player => (
+                                <div key={player.id} className="player-item">
+                                    <span style={{fontSize: '1.2rem'}}>
+                                        {player.name} {player.id === game.host && '👑'}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div style={{marginBottom: '2rem', textAlign: 'center'}}>
+                            <p style={{fontSize: '1.2rem'}}>Rounds: {game.rounds}</p>
+                            <p style={{fontSize: '1.2rem'}}>Atouts: {game.atouts ? 'Oui' : 'Non'}</p>
+                        </div>
+
+                        <div style={{display: 'flex', gap: '1rem', justifyContent: 'center'}}>
+                            <button className="btn btn-back" onClick={handleLeave}>
+                                Quitter
+                            </button>
+                            {isHost && (
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={handleStart}
+                                    disabled={game.players.length < 2}
+                                >
+                                    Démarrer la partie
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function GameScreen({ gameId, playerName, playerId, setScreen }) {
+            const [game, setGame] = useState(null);
+            const [countdown, setCountdown] = useState(null);
+            const [gameTime, setGameTime] = useState(0);
+            const [players, setPlayers] = useState({});
+            const [wolf, setWolf] = useState(null);
+            const [roundEnded, setRoundEnded] = useState(false);
+            const [gameEnded, setGameEnded] = useState(false);
+            const [powers, setPowers] = useState({
+                invisibility: 1,
+                run: 2,
+                pouf: 2,
+                omniscience: 2
+            });
+            const [activePower, setActivePower] = useState(null);
+            const [powerTimer, setPowerTimer] = useState(0);
+            const [directionIndicator, setDirectionIndicator] = useState(null);
+
+            const canvasRef = useRef(null);
+            const keysPressed = useRef({});
+
+            useEffect(() => {
+                initGame();
+                const interval = setInterval(loadGame, 500);
+                return () => clearInterval(interval);
+            }, []);
+
+            useEffect(() => {
+                if (countdown !== null && countdown > 0) {
+                    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+                    return () => clearTimeout(timer);
+                } else if (countdown === 0) {
+                    setCountdown(null);
+                }
+            }, [countdown]);
+
+            useEffect(() => {
+                if (countdown === null && !roundEnded && !gameEnded) {
+                    const timer = setInterval(() => setGameTime(t => t + 1), 1000);
+                    return () => clearInterval(timer);
+                }
+            }, [countdown, roundEnded, gameEnded]);
+
+            useEffect(() => {
+                if (powerTimer > 0) {
+                    const timer = setTimeout(() => {
+                        setPowerTimer(powerTimer - 1);
+                        if (powerTimer === 1) {
+                            setActivePower(null);
+                        }
+                    }, 1000);
+                    return () => clearTimeout(timer);
+                }
+            }, [powerTimer]);
+
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    keysPressed.current[e.key.toLowerCase()] = true;
+                };
+                const handleKeyUp = (e) => {
+                    keysPressed.current[e.key.toLowerCase()] = false;
+                };
+
+                window.addEventListener('keydown', handleKeyDown);
+                window.addEventListener('keyup', handleKeyUp);
+
+                return () => {
+                    window.removeEventListener('keydown', handleKeyDown);
+                    window.removeEventListener('keyup', handleKeyUp);
+                };
+            }, []);
+
+            useEffect(() => {
+                if (countdown === null && !roundEnded && !gameEnded) {
+                    const moveInterval = setInterval(movePlayer, 50);
+                    return () => clearInterval(moveInterval);
+                }
+            }, [countdown, roundEnded, gameEnded, players, activePower, gameTime]);
+
+            const initGame = async () => {
+                try {
+                    const result = await window.storage.get(`game:${gameId}`, true);
+                    if (result) {
+                        const gameData = JSON.parse(result.value);
+                        setGame(gameData);
+
+                        const wolfIndex = Math.floor(Math.random() * gameData.players.length);
+                        const selectedWolf = gameData.players[wolfIndex].id;
+                        setWolf(selectedWolf);
+
+                        const initialPlayers = {};
+                        gameData.players.forEach(player => {
+                            initialPlayers[player.id] = {
+                                x: Math.random() * (window.innerWidth - 100) + 50,
+                                y: Math.random() * (window.innerHeight - 100) + 50,
+                                isWolf: player.id === selectedWolf,
+                                name: player.name,
+                                caught: false
+                            };
+                        });
+                        setPlayers(initialPlayers);
+
+                        if (selectedWolf === playerId) {
+                            setCountdown(10);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erreur init:', error);
+                }
+            };
+
+            const loadGame = async () => {
+                try {
+                    const result = await window.storage.get(`game:${gameId}`, true);
+                    if (result) {
+                        const gameData = JSON.parse(result.value);
+                        setGame(gameData);
+                    }
+                } catch (error) {
+                    console.error('Erreur load:', error);
+                }
+            };
+
+            const movePlayer = () => {
+                if (!players[playerId] || players[playerId].caught) return;
+
+                let speed = 5;
+                const isWolf = players[playerId].isWolf;
+
+                if (isWolf) {
+                    if (gameTime < 60) speed = 5;
+                    else if (gameTime < 80) speed = 10;
+                    
+                    if (activePower === 'omniscience') {
+                        speed = 7.5;
+                    }
+                } else {
+                    if (activePower === 'invisibility') {
+                        speed = 10;
+                    } else if (activePower === 'run') {
+                        speed = 12.5;
+                    }
+                }
+
+                let dx = 0;
+                let dy = 0;
+
+                if (keysPressed.current['z'] || keysPressed.current['arrowup']) dy -= speed;
+                if (keysPressed.current['s'] || keysPressed.current['arrowdown']) dy += speed;
+                if (keysPressed.current['q'] || keysPressed.current['arrowleft']) dx -= speed;
+                if (keysPressed.current['d'] || keysPressed.current['arrowright']) dx += speed;
+
+                if (dx !== 0 || dy !== 0) {
+                    setPlayers(prev => {
+                        const newX = Math.max(20, Math.min(window.innerWidth - 60, prev[playerId].x + dx));
+                        const newY = Math.max(20, Math.min(window.innerHeight - 60, prev[playerId].y + dy));
+
+                        return {
+                            ...prev,
+                            [playerId]: {
+                                ...prev[playerId],
+                                x: newX,
+                                y: newY
+                            }
+                        };
+                    });
+
+                    checkCollisions();
+                }
+            };
+
+            const checkCollisions = () => {
+                if (!wolf || !players[wolf] || players[wolf].id !== playerId) return;
+
+                Object.keys(players).forEach(pId => {
+                    if (pId !== wolf && !players[pId].caught) {
+                        const dx = players[wolf].x - players[pId].x;
+                        const dy = players[wolf].y - players[pId].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < 50) {
+                            setPlayers(prev => ({
+                                ...prev,
+                                [pId]: { ...prev[pId], caught: true }
+                            }));
+
+                            endRound(gameTime < 60 ? 10 : 5);
+                        }
+                    }
+                });
+            };
+
+            const usePower = (powerType) => {
+                if (powers[powerType] <= 0 || activePower) return;
+
+                if (powerType === 'pouf') {
+                    const villagers = Object.keys(players).filter(p => !players[p].isWolf);
+                    if (villagers.length === 0) return;
+
+                    const wolfPos = players[wolf];
+                    const villagerPos = players[playerId];
+
+                    setPlayers(prev => ({
+                        ...prev,
+                        [wolf]: { ...prev[wolf], x: villagerPos.x, y: villagerPos.y },
+                        [playerId]: { ...prev[playerId], x: wolfPos.x, y: wolfPos.y }
+                    }));
+
+                    setPowers(prev => ({ ...prev, pouf: prev.pouf - 1 }));
+                } else if (powerType === 'omniscience') {
+                    const villagers = Object.keys(players).filter(p => !players[p].isWolf && !players[p].caught);
+                    if (villagers.length === 0) return;
+
+                    const closestVillager = villagers[0];
+                    const dx = players[closestVillager].x - players[playerId].x;
+                    const dy = players[closestVillager].y - players[playerId].y;
+
+                    let arrow = '↑';
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        arrow = dx > 0 ? '→' : '←';
+                    } else {
+                        arrow = dy > 0 ? '↓' : '↑';
+                    }
+
+                    setDirectionIndicator(arrow);
+                    setTimeout(() => setDirectionIndicator(null), 3000);
+
+                    setActivePower('omniscience');
+                    setPowerTimer(3);
+                    setPowers(prev => ({ ...prev, omniscience: prev.omniscience - 1 }));
+                } else {
+                    setActivePower(powerType);
+                    setPowerTimer(powerType === 'invisibility' ? 7 : 5);
+                    setPowers(prev => ({ ...prev, [powerType]: prev[powerType] - 1 }));
+                }
+            };
+
+            const endRound = async (wolfPoints) => {
+                setRoundEnded(true);
+
+                const usedPowers = (activePower ? 1 : 0) + 
+                                   (1 - powers.invisibility) + 
+                                   (2 - powers.run) + 
+                                   (2 - powers.pouf);
+
+                const updatedPlayers = game.players.map(p => {
+                    if (p.id === wolf) {
+                        return { ...p, score: p.score + wolfPoints };
+                    } else if (!players[p.id].caught) {
+                        return { ...p, score: p.score + Math.max(0, 20 - (usedPowers * 2)) };
+                    }
+                    return p;
+                });
+
+                const updatedGame = {
+                    ...game,
+                    players: updatedPlayers,
+                    currentRound: game.currentRound + 1
+                };
+
+                if (game.currentRound >= game.rounds) {
+                    updatedGame.status = 'finished';
+                    setGameEnded(true);
+                }
+
+                try {
+                    await window.storage.set(`game:${gameId}`, JSON.stringify(updatedGame), true);
+                    setGame(updatedGame);
+
+                    if (!gameEnded) {
+                        setTimeout(() => {
+                            if (game.currentRound < game.rounds) {
+                                window.location.reload();
+                            }
+                        }, 5000);
+                    }
+                } catch (error) {
+                    console.error('Erreur fin round:', error);
+                }
+            };
+
+            useEffect(() => {
+                if (countdown === null && gameTime >= 80 && !roundEnded && !gameEnded) {
+                    endRound(gameTime < 60 ? 10 : 5);
+                }
+            }, [gameTime]);
+
+            if (!game || !players[playerId]) {
+                return <div className="menu-container"><p>Chargement...</p></div>;
+            }
+
+            const isWolf = players[playerId].isWolf;
+
+            return (
+                <div className="game-canvas" ref={canvasRef}>
+                    {countdown !== null && (
+                        <div className="countdown-overlay">
+                            <h2 style={{fontSize: '3rem', marginBottom: '2rem'}}>VOUS ÊTES LE LOUP!</h2>
+                            <div className="countdown-number">{countdown === 0 ? 'RUN!' : countdown}</div>
+                        </div>
+                    )}
+
+                    {countdown === null && (
+                        <>
+                            <div className="game-ui">
+                                <div className="timer">
+                                    {Math.floor((80 - gameTime) / 60)}:{String((80 - gameTime) % 60).padStart(2, '0')}
+                                </div>
+                                <p>Vous êtes: {isWolf ? '🐺 LOUP' : '👤 VILLAGEOIS'}</p>
+                                
+                                {!isWolf && game.atouts && (
+                                    <div className="powers">
+                                        <button
+                                            className="power-btn"
+                                            onClick={() => usePower('invisibility')}
+                                            disabled={powers.invisibility === 0 || activePower}
+                                        >
+                                            👻 Invisibilité ({powers.invisibility})
+                                        </button>
+                                        <button
+                                            className="power-btn"
+                                            onClick={() => usePower('run')}
+                                            disabled={powers.run === 0 || activePower}
+                                        >
+                                            💨 Run! ({powers.run})
+                                        </button>
+                                        <button
+                                            className="power-btn"
+                                            onClick={() => usePower('pouf')}
+                                            disabled={powers.pouf === 0 || activePower}
+                                        >
+                                            ✨ Pouf! ({powers.pouf})
+                                        </button>
+                                    </div>
+                                )}
+
+                                {isWolf && game.atouts && (
+                                    <div className="powers">
+                                        <button
+                                            className="power-btn"
+                                            onClick={() => usePower('omniscience')}
+                                            disabled={powers.omniscience === 0 || activePower}
+                                        >
+                                            🔮 Omniscience ({powers.omniscience})
+                                        </button>
+                                    </div>
+                                )}
+
+                                {activePower && (
+                                    <p style={{marginTop: '1rem'}}>
+                                        Pouvoir actif: {powerTimer}s
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="scores">
+                                <h3 style={{marginBottom: '0.5rem'}}>Scores</h3>
+                                {game.players.map(p => (
+                                    <div key={p.id} className="score-item">
+                                        {p.name}: {p.score}pts
+                                    </div>
+                                ))}
+                                <p style={{marginTop: '0.5rem', fontSize: '0.9rem'}}>
+                                    Round {game.currentRound}/{game.rounds}
+                                </p>
+                            </div>
+
+                            {directionIndicator && (
+                                <div className="direction-indicator">
+                                    {directionIndicator}
+                                </div>
+                            )}
+                        </>
+                    )}
+
+                    <div className="lake" style={{
+                        width: '200px',
+                        height: '150px',
+                        left: '30%',
+                        top: '40%'
+                    }}></div>
+
+                    <div className="house" style={{
+                        width: '80px',
+                        height: '60px',
+                        left: '60%',
+                        top: '30%'
+                    }}></div>
+
+                    {Object.entries(players).map(([pId, player]) => (
+                        <div
+                            key={pId}
+                            className={`player ${player.isWolf ? 'wolf' : 'villager'} ${
+                                activePower === 'invisibility' && pId === playerId ? 'invisible' : ''
+                            }`}
+                            style={{
+                                left: `${player.x}px`,
+                                top: `${player.y}px`,
+                                display: player.caught ? 'none' : 'block'
+                            }}
+                        >
+                            {player.isWolf ? '🐺' : '👤'}
+                        </div>
+                    ))}
+
+                    {(roundEnded || gameEnded) && (
+                        <div className="end-screen">
+                            <h1 className="end-title">
+                                {gameEnded ? 'Partie terminée!' : 'Round terminé!'}
+                            </h1>
+                            <div className="final-scores">
+                                <h2 style={{marginBottom: '1rem'}}>Scores finaux</h2>
+                                {game.players
+                                    .sort((a, b) => b.score - a.score)
+                                    .map((p, i) => (
+                                        <div key={p.id} style={{fontSize: '1.5rem', marginBottom: '0.5rem'}}>
+                                            {i + 1}. {p.name} - {p.score} points
+                                        </div>
+                                    ))}
+                            </div>
+                            {gameEnded && (
+                                <button className="btn btn-primary" onClick={() => setScreen('menu')}>
+                                    Retour au menu
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
